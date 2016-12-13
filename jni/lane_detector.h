@@ -14,7 +14,7 @@ extern "C" {
  * Signature: (JJ)V
  */
 
-JNIEXPORT void JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDelegate
+JNIEXPORT jintArray JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDelegate
   (JNIEnv *env, jobject obj, jlong in, jlong out, jint houghValue);
 
 

@@ -119,6 +119,6 @@ public class LaneDetector extends Activity implements CvCameraViewListener2 {
         return img;
     }
 
-    public native void mainDelegate(long input, long output, int houghValue);
+    public native int[] mainDelegate(long input, long output, int houghValue);
 
 }
