@@ -14,82 +14,55 @@ import android.widget.SeekBar;
 public class VerticalSeekBar extends SeekBar {
 
     public VerticalSeekBar(Context context) {
-
-    	super(context);
-
+        super(context);
     }
 
-public VerticalSeekBar(Context context, AttributeSet attrs, int defStyle) {
-
+    public VerticalSeekBar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-}
-
-public VerticalSeekBar(Context context, AttributeSet attrs) {
-
-	super(context, attrs);
-}
-
-
-protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-
-    super.onSizeChanged(h, w, oldh, oldw);
-
-}
-
-@Override
-protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-
-	super.onMeasure(heightMeasureSpec, widthMeasureSpec);
-	setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
-}
-
-
-protected void onDraw(Canvas c) {
-
-	c.rotate(-90);
-    c.translate(-getHeight(), 0);
- 
-    super.onDraw(c);
-
-}
-
-
-@Override
-
-public boolean onTouchEvent(MotionEvent event) {
-
-
-    if (!isEnabled()) {
-
-    	return false;
     }
 
-    switch (event.getAction()) {
+    public VerticalSeekBar(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
 
 
-            case MotionEvent.ACTION_DOWN:
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(h, w, oldh, oldw);
+    }
 
-            case MotionEvent.ACTION_MOVE:
+    @Override
+    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(heightMeasureSpec, widthMeasureSpec);
+        setMeasuredDimension(getMeasuredHeight(), getMeasuredWidth());
+    }
 
-            case MotionEvent.ACTION_UP:
+    protected void onDraw(Canvas c) {
+        c.rotate(-90);
+        c.translate(-getHeight(), 0);
 
-               setProgress(getMax() - (int) (getMax() * event.getY() / getHeight()));
+        super.onDraw(c);
+    }
 
-               onSizeChanged(getWidth(), getHeight(), 0, 0);
-
-               break;
-
-            case MotionEvent.ACTION_CANCEL:
-
-                break;
-
-
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (!isEnabled()) {
+            return false;
         }
 
-  return true;
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_MOVE:
+            case MotionEvent.ACTION_UP:
+                setProgress(getMax() - (int) (getMax() * event.getY() / getHeight()));
 
+                onSizeChanged(getWidth(), getHeight(), 0, 0);
 
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                break;
+        }
+
+        return true;
     }
-
 
 }

@@ -13,67 +13,56 @@ import android.widget.TextView;
 
 /**
  * The Activity for Vertical Slider display to take input of Hough Transform value
- * 
- * @author Wahib-Ul-Haq
  *
+ * @author Wahib-Ul-Haq
  */
 
 public class VerticalSliderActivity extends Activity {
 
-private Button forwardButton;
-private TextView sliderText;
-private VerticalSeekBar verticalSeebar;
+    private Button forwardButton;
+    private TextView sliderText;
+    private VerticalSeekBar verticalSeebar;
 
-@Override
-public void onCreate(Bundle savedInstanceState) {
-
-
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_selection);
-        
+
         sliderText = (TextView) findViewById(R.id.verticalSeekbarText);
-        forwardButton = (Button)findViewById(R.id.forwardButton);
-        verticalSeebar = (VerticalSeekBar)findViewById(R.id.verticalSeekbar);
+        forwardButton = (Button) findViewById(R.id.forwardButton);
+        verticalSeebar = (VerticalSeekBar) findViewById(R.id.verticalSeekbar);
 
         forwardButton.setOnClickListener(new OnClickListener() {
 
-			@Override
-			public void onClick(View arg0) {
-				
-				// TODO Auto-generated method stub
-				Intent intent = new Intent(getApplicationContext(), LaneDetector.class); 
-			    intent.putExtra("houghvalue", sliderText.getText().toString());
-			    startActivity(intent);
-			}
- 
-		});
+            @Override
+            public void onClick(View arg0) {
+                // TODO Auto-generated method stub
+                Intent intent = new Intent(getApplicationContext(), LaneDetector.class);
+                intent.putExtra("houghvalue", sliderText.getText().toString());
+                startActivity(intent);
+            }
 
+        });
 
-   verticalSeebar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+        verticalSeebar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 
-   @Override
-   public void onStopTrackingTouch(SeekBar seekBar) {
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                //
+            }
 
-   }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                //
+            }
 
-   @Override
-   public void onStartTrackingTouch(SeekBar seekBar) {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                sliderText.setText("" + progress);
+            }
 
-   }
-
-   @Override
-   public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-    sliderText.setText(""+progress);
-
-   }
-
-
-  });   
-        
-
-}   
-
+        });
+    }
 
 }
