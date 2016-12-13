@@ -65,7 +65,7 @@ public class LaneDetector extends Activity implements CvCameraViewListener2 {
     @Override
     public void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_6, this, mLoaderCallback);
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_8, this, mLoaderCallback);
     }
 
     @Override
