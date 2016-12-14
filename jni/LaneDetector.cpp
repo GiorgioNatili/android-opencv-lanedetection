@@ -14,6 +14,7 @@
 #include <jni.h>
 #include "lane_detector.h"
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/gpumat.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
 #include <opencv2/highgui/highgui.hpp>
@@ -29,7 +30,7 @@
 
 using namespace std;
 using namespace cv;
-
+using namespace gpu;
 
 JNIEXPORT jintArray JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDelegate
         (JNIEnv *env, jobject obj, jlong in, jlong out, jint houghValue) {
@@ -42,9 +43,13 @@ JNIEXPORT jintArray JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDele
     Mat &imageOrig = *(Mat *) in;
     Mat &output = *(Mat *) out;
 
+    Mat image(imageOrig);
+    gpu::GpuMat gpuImageOrig = gpu::GpuMat(imageOrig);
+
     //////reducing the image size////
-    Mat image;
-    resize(imageOrig, image, Size(), 0.25, 0.25,
+//    Mat image;
+    gpu::GpuMat gpuImage;
+    resize(gpuImageOrig, gpuImage, Size(), 0.25, 0.25,
            cv::INTER_LINEAR); //to reduce it to 1/4 of size
 
     int houghVote = houghValue;
@@ -53,40 +58,45 @@ JNIEXPORT jintArray JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDele
     //double dWidth = cap.get(CV_CAP_PROP_FRAME_WIDTH); //get the width of frames of the video
     //double dHeight = cap.get(CV_CAP_PROP_FRAME_HEIGHT); //get the height of frames of the video
 
-    if (image.empty()) {
+    if (gpuImage.empty()) {
         //break;
         __android_log_print(ANDROID_LOG_ERROR, "LANEDETECTOR++", "%s", "Cannot access the camera");
 
         exit(0);
     }
 
-    Mat gray;
-    cvtColor(image, gray, CV_RGB2GRAY); //convert image to grayscale
+//    Mat gray;
+    GpuMat gray;
+    cvtColor(gpuImage, gray, CV_RGB2GRAY); //convert image to grayscale
     vector<string> codes;
-    Mat corners;
+//    Mat corners;
+    GpuMat corners;
     findDataMatrix(gray, codes, corners);
-    drawDataMatrixCodes(image, codes, corners);
+    drawDataMatrixCodes(gpuImage, codes, corners);
 
     /*ROI returns a matrix that is pointing to the ROI of the original image, located at the place specified by the rectangle.
     so imageROI is really the Region of Interest (or subimage/submatrix) of the original image "image".
     If you modify imageROI it will consequently modify the original, larger matrix.
     Rect region_of_interest = Rect(x, y, w, h); current parameters try to take the lower half of the image on vertical frame*/
 
-    Rect roi(0, image.cols / 3, image.cols - 1,
-             image.rows - image.cols / 3);// set the ROI (region of interest) for the image
+    Rect roi(0, gpuImage.cols / 3, gpuImage.cols - 1,
+             gpuImage.rows - gpuImage.cols / 3);// set the ROI (region of interest) for the image
     //Rect roi(0,image.cols/2,image.cols-1,image.rows - image.cols/2);// set the ROI (region of interest) for the image
 
-    Mat imgROI = image(roi);
+//    Mat imgROI = image(roi);
+    GpuMat imgROI = gpuImage(roi);
 
     /* Canny Edge Detector algorithm : canny (source image, edge output image, first threshold for the hysteresis procedure,
        , second threshold for the hysteresis procedure, apersturesize i.e set to be 3 by default , L2gradient )
        threshold2 is recommended to be 3 times to threshold1 */
 
-    Mat contours;
+//    Mat contours;
+    GpuMat contours;
     Canny(imgROI, contours, 80, 250, 3); //50, 150,3); //in original code => 50,250);
 
     /* Thresholding is to differentiate the pixels we are interested in from the rest */
-    Mat contoursInv;
+//    Mat contoursInv;
+    GpuMat contoursInv;
     threshold(contours, contoursInv, 128, 255, THRESH_BINARY_INV);
 
     // Hough tranform for line detection with feedback
@@ -107,36 +117,38 @@ JNIEXPORT jintArray JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDele
     }
 
     //cout << houghVote << "\n";
-    Mat result(imgROI.size(), CV_8U, Scalar(255));
+//    Mat result(imgROI.size(), CV_8U, Scalar(255));
+    GpuMat result(imgROI.size(), CV_8U, Scalar(255));
     imgROI.copyTo(result);
 
     // Draw the lines
     vector<Vec2f>::const_iterator it = lines.begin();
-    Mat hough(imgROI.size(), CV_8U, Scalar(0));
+//    Mat hough(imgROI.size(), CV_8U, Scalar(0));
+    GpuMat hough(imgROI.size(), CV_8U, Scalar(0));
 
 
-    while (it != lines.end()) {
-
-        //__android_log_print(ANDROID_LOG_INFO, "LANEDETECTOR++", "%s", "while of lines");
-
-        float rho = (*it)[0];   // first element is distance rho
-        float theta = (*it)[1]; // second element is angle theta
-
-        // filter to remove vertical and horizontal lines
-        //if(theta is between 5 degrees and 84 degrees) or if(theta is between 95 degrees and 180 degrees )
-        if ((theta > 0.09 && theta < 1.48) || (theta < 3.14 && theta > 1.66)) {
-            // point of intersection of the line with first row
-            Point pt1(rho / cos(theta), 0);//y = 0
-
-            // point of intersection of the line with last row
-            Point pt2((rho - result.rows * sin(theta)) / cos(theta), result.rows);//y = row count
-
-                    //This draws lines but without ends and in shape of X
-            line(hough, pt1, pt2, Scalar(255),
-                 5); //this is working and shows red lines of thickness 10
-        }
-        ++it;
-    }
+//    while (it != lines.end()) {
+//
+//        //__android_log_print(ANDROID_LOG_INFO, "LANEDETECTOR++", "%s", "while of lines");
+//
+//        float rho = (*it)[0];   // first element is distance rho
+//        float theta = (*it)[1]; // second element is angle theta
+//
+//        // filter to remove vertical and horizontal lines
+//        //if(theta is between 5 degrees and 84 degrees) or if(theta is between 95 degrees and 180 degrees )
+//        if ((theta > 0.09 && theta < 1.48) || (theta < 3.14 && theta > 1.66)) {
+//            // point of intersection of the line with first row
+//            Point pt1(rho / cos(theta), 0);//y = 0
+//
+//            // point of intersection of the line with last row
+//            Point pt2((rho - result.rows * sin(theta)) / cos(theta), result.rows);//y = row count
+//
+//                    //This draws lines but without ends and in shape of X
+//            line(hough, pt1, pt2, Scalar(255),
+//                 5); //this is working and shows red lines of thickness 5
+//        }
+//        ++it;
+//    }
 
     // Create LineFinder instance
     LineFinder ld;
@@ -148,16 +160,19 @@ JNIEXPORT jintArray JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDele
     // Detect lines
     vector<Vec4i> li = ld.findLines(contours); //applying probablity hough transform
 
-    Mat houghP(imgROI.size(), CV_8U, Scalar(0));
+//    Mat houghP(imgROI.size(), CV_8U, Scalar(0));
+    GpuMat houghP(imgROI.size(), CV_8U, Scalar(0));
     ld.setShift(0);
-    ld.drawDetectedLines(houghP);
+//    ld.drawDetectedLines(houghP);
 
     // bitwise AND of the two hough images.
     //1) Normal Hough -> without end points 2) Probabilistic Hough -> with end points
 
     bitwise_and(houghP, hough, houghP);
-    Mat houghPinv(imgROI.size(), CV_8U, Scalar(0));
-    Mat dst(imgROI.size(), CV_8U, Scalar(0));
+//    Mat houghPinv(imgROI.size(), CV_8U, Scalar(0));
+//    Mat dst(imgROI.size(), CV_8U, Scalar(0));
+    GpuMat houghPinv(imgROI.size(), CV_8U, Scalar(0));
+    GpuMat dst(imgROI.size(), CV_8U, Scalar(0));
     threshold(houghP, houghPinv, 150, 255,
               THRESH_BINARY_INV); // threshold and invert to black lines
 
@@ -171,7 +186,7 @@ JNIEXPORT jintArray JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDele
     ld.setLineLengthAndGap(5, 2); //5,2 original
     ld.setMinVote(1); //1 original
 
-    ld.setShift(image.cols / 3);
+    ld.setShift(gpuImage.cols / 3);
     ld.drawDetectedLines(image);
 
     //to show the number of line segments found in a frame
@@ -181,7 +196,7 @@ JNIEXPORT jintArray JNICALL Java_tum_andrive_lanedetection_LaneDetector_mainDele
 
     //Hough Processing ends here
 
-    resize(image, image, Size(), 4, 4, cv::INTER_LINEAR);
+//    resize(image, image, Size(), 4, 4, cv::INTER_LINEAR);
     output = image;
 
     // Initialize output jintArray
